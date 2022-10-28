@@ -40,26 +40,53 @@ class Curve:
         D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
         """
         Dprev = 0
+        print(f"Dprev: {Dprev}")
+
+        # Pool liquidity for each token
         xp = self.xp()
-        S = sum(xp)
+        print(f"xp: {xp}")  # Eq - xp: [1242000000, 1542000000, 1456000000]
+
+        S = sum(xp) 
+        print(f"S: {S}")   # Eq - S: 4240000000
+
         D = S
+        print(f"D: {D}")    # Eq - D: 4240000000
+
+
         Ann = self.A * self.n
+        print(f"self.A: {self.A}, self.n:{self.n}")
+        print(f"Ann: {Ann}")
 
         counter = 0
 
+        print(f"\nStart WHILE Loop: while abs(D - Dprev) > 1:")
         while abs(D - Dprev) > 1:
             D_P = D
+
+            print(f"\nStart FOR Loop: D_P = D_P * D / (_x * N_COINS):")
             for x in xp:
+                print(f"\nD_P: {D_P}") 
+                print(f"denominator: {self.n * x}")
                 D_P = D_P * D // (self.n * x)
+                print(f"new D_P: {D_P}")
+            
+            print(f"\nnew D_P (calculated via D_P = D_P * D / (_x * N_COINS) ):: {D_P}")
             Dprev = D
+            print(f"Dprev: {Dprev}")
+
             D = (Ann * S + D_P * self.n) * D // ((Ann - 1) * D + (self.n + 1) * D_P)
+            print(f"\nD: {D} = (Ann * S + D_P * self.n) * D // ((Ann - 1) * D + (self.n + 1) * D_P) \nwhere, Ann * S:{Ann * S} | D_P * self.n:{D_P * self.n} | (Ann - 1) * D:{(Ann - 1) * D} | (self.n + 1) * D_P:{(self.n + 1) * D_P}")
 
             counter += 1
-            if counter > 1000:
+            print(f"counter: {counter}")
+            if counter > 10:
                 break
 
         return D
 
+    # x: new_amount, i.e updated offer pool balance
+    # j: index of the pool token to be bought
+    # i: pool index of the token to be sold (offer pool)
     def y(self, i, j, x):
         """
         Calculate x[j] if one makes x[i] = x
@@ -71,20 +98,47 @@ class Curve:
         x_1 = (x_1**2 + c) / (2*x_1 + b)
         """
         D = self.D()
+        print(f"D: {D}")
+        print("\nStart y() function")
+
         xx = self.xp()
+        print(f"xx: {xx}")
+        print(f"xx[j]: {xx[j]}")
+
         xx[i] = x  # x is quantity of underlying asset brought to 1e18 precision
+        print(f"xx[i]: {xx[i]}")
+
         xx = [xx[k] for k in range(self.n) if k != j]
+        print(f"xx: {xx}")
+
         Ann = self.A * self.n
+        print(f"Ann: {Ann}")
+
         c = D
+        print(f"c: {c}")
+
+        print(f"\nStart FOR Loop: c = c * D // (xx[i] * self.n):")
         for y in xx:
+            print(f"y: {y}")
             c = c * D // (y * self.n)
+            print(f"c: {c}")
+        print(f"c (loop is over): {c}:")
+
         c = c * D // (self.n * Ann)
+        print(f"c = c * D // (self.n * Ann): {c}")
+
         b = sum(xx) + D // Ann - D
+        print(f"b: {b}")
+
         y_prev = 0
+        print(f"y_prev: {y_prev}")
+
         y = D
+        print(f"y: {y}")
 
         counter = 0
 
+        print(f"\nStart WHILE Loop: while abs(y - y_prev) > 1:")
         while abs(y - y_prev) > 1:
             y_prev = y
             y = (y ** 2 + c) // (2 * y + b)
